@@ -4,19 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f3f5f8" />
-  <meta name="description" content="TCP Reno 與 Appropriate Byte Counting 封包傳輸及壅塞控制" />
-  <title>TCP Reno + ABC Lab｜封包傳輸</title>
+  <meta name="description" content="TCP 封包傳輸及壅塞控制" />
+  <title>TCP｜傳輸控制協定</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
   <a class="skip-link" href="#main-content">跳至模擬內容</a>
   <header class="site-header">
-    <a class="brand" href="#main-content" aria-label="TCP Reno Lab 首頁"><span class="brand-mark" aria-hidden="true">↗</span><strong>TCP Reno Lab</strong></a>
+    <a class="brand" href="#main-content" aria-label="TCP Lab 首頁"><span class="brand-mark" aria-hidden="true">↗</span><strong>TCP Lab</strong></a>
     <div class="header-actions"><button id="btn-reset" class="btn btn-ghost" type="button"><span aria-hidden="true">↺</span> 重置</button></div>
   </header>
   <main class="dashboard" id="main-content">
     <section class="status-strip" aria-label="目前 TCP 狀態">
-      <div class="sim-title"><span class="eyebrow">TCP RENO · RFC 3465 ABC</span><strong>封包傳輸與壅塞控制</strong></div>
+      <div class="sim-title"><span class="eyebrow">TCP RENO</span><strong>封包傳輸 與 壅塞控制</strong></div>
       <div class="metric"><span>壅塞視窗 <abbr title="Congestion Window">cwnd</abbr></span><b><span id="disp-cwnd">1</span><small>MSS</small></b></div>
       <div class="metric"><span>慢啟動門檻 <abbr title="Slow Start Threshold">ssthresh</abbr></span><b><span id="disp-ssthresh">8</span><small>MSS</small></b></div>
       <div class="metric"><span>下一個 ACK</span><b><span id="disp-nextack">1</span><small>seq</small></b></div>
