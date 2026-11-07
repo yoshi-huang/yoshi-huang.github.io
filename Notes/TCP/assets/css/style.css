@@ -52,3 +52,213 @@ html{font-size:14px;scroll-padding-top:60px}body{height:100vh;height:100dvh;min-
 @keyframes valuePulse{0%{transform:scale(1);color:inherit}38%{transform:scale(1.2);color:var(--blue)}100%{transform:scale(1);color:inherit}}
 @keyframes badgeIn{from{opacity:.55;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
 .s-retx-flight,.s-retx-row{background:#8561b5}.log-entry.log-retx{border-left-color:#8561b5}
+
+/* Full-screen TCP connection animation */
+.connection-scene{position:fixed;inset:0;z-index:500;display:grid;place-items:center;padding:0;background:#f3f6fa;opacity:1;transition:opacity .35s ease}
+.connection-scene[hidden]{display:none}.connection-scene.leaving{opacity:0;pointer-events:none}
+.connection-card{width:100%;height:100%;min-height:100dvh;padding:clamp(24px,5vh,64px) clamp(20px,7vw,120px);display:flex;flex-direction:column;justify-content:center;background:#f3f6fa}
+.connection-heading{text-align:center}.connection-heading h1{font-size:clamp(32px,5vw,64px);margin:10px 0}.connection-heading p{font-size:clamp(14px,1.5vw,19px);color:#718096}
+.handshake-diagram{flex:1;min-height:360px;max-height:65vh;display:grid;grid-template-columns:minmax(100px,160px) minmax(0,1fr) minmax(100px,160px);align-items:stretch;gap:clamp(14px,3vw,48px);margin:clamp(28px,5vh,64px) auto;width:min(1320px,100%)}
+.endpoint-label{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#34435a}.endpoint-label .endpoint-icon{width:clamp(54px,7vw,84px);height:clamp(54px,7vw,84px);font-size:clamp(25px,4vw,44px);border-radius:20px}.endpoint-label strong{font-size:clamp(17px,2vw,24px)}.endpoint-label small{font-size:clamp(12px,1.2vw,16px)}
+.packet-lanes{position:relative;display:flex;flex-direction:column;justify-content:center;gap:clamp(13px,2vh,22px);padding:28px 0}
+.time-axis{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;color:#8995a5;font-size:clamp(12px,1.2vw,16px)}.time-axis i{height:1px;flex:1;background:#cfd8e4}
+.packet-lane{height:clamp(30px,4vh,46px);position:relative;display:flex;align-items:center;background:linear-gradient(164deg,transparent 49.5%,#d7e0eb 49.7%,#d7e0eb 50.3%,transparent 50.5%) center/100% 100% no-repeat;--start:2%;--end:98%}
+.packet-lane.reverse{--start:98%;--end:2%}
+.packet-lane.syn{--packet-color:#3474c8}.packet-lane.synack{--packet-color:#3474c8}.packet-lane.ack{--packet-color:#19865f}.packet-lane.fin{--packet-color:#d28a31}.packet-lane.finack{--packet-color:#c85c5c}
+.packet-lane .packet-label{position:absolute;z-index:2;left:var(--start);top:0;transform:translate(-50%,-50%);padding:clamp(8px,1.2vh,14px) clamp(14px,2vw,24px);border:2px solid var(--packet-color);border-radius:10px;background:#fff;color:var(--packet-color);font-size:clamp(13px,1.6vw,20px);font-weight:700;white-space:nowrap;box-shadow:0 8px 22px #233b6018;opacity:0;animation:packet-travel .62s cubic-bezier(.2,.7,.25,1) var(--delay) both}
+.packet-lane.reverse .packet-label{animation-name:packet-return}
+.packet-lane .lane-tip{position:absolute;left:var(--end);top:50%;width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-left:12px solid var(--packet-color);transform:translate(-50%,-50%);opacity:0;animation:tip-in .12s ease calc(var(--delay) + .55s) both}
+.packet-lane.reverse .lane-tip{border-left:0;border-right:12px solid var(--packet-color)}
+.packet-lane .packet-label:after{content:'';position:absolute;left:0;right:0;bottom:-8px;height:2px;background:var(--packet-color);opacity:.45}
+.connection-status{display:flex;align-items:center;justify-content:center;gap:9px;min-height:34px;color:#536279;font-size:clamp(13px,1.3vw,17px)}.connection-dot{width:10px;height:10px;border-radius:50%;background:#e3a640;animation:pulse 1.1s infinite}.connection-scene.complete .connection-dot{background:#26a271;animation:none}
+#connection-skip{height:40px;padding:0 18px;margin:14px auto 0;background:#3474c8;border-color:#3474c8;color:#fff;font-size:13px}
+@keyframes packet-travel{0%{left:var(--start);top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:var(--end);top:100%;opacity:0}}
+@keyframes packet-return{0%{left:var(--start);top:100%;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:var(--end);top:0;opacity:0}}
+@keyframes tip-in{to{opacity:1}}@keyframes pulse{50%{box-shadow:0 0 0 6px #e3a64018}}
+@media(max-width:560px){.connection-card{padding:22px 10px}.handshake-diagram{min-height:330px;max-height:58vh;grid-template-columns:52px minmax(0,1fr) 52px;gap:5px;margin:22px auto}.endpoint-label .endpoint-icon{width:42px;height:42px;font-size:22px;border-radius:12px}.endpoint-label strong{font-size:13px}.endpoint-label small{font-size:10px}.packet-lanes{gap:12px}.packet-lane .packet-label{font-size:11px;padding:7px 8px}}
+@media(prefers-reduced-motion:reduce){.packet-lane .packet-label,.packet-lane .lane-tip{animation-duration:.01ms!important;animation-delay:0ms!important}}
+
+
+/* Vertical TCP sequence diagram: endpoints stay fixed, time flows down. */
+.connection-card{padding:clamp(20px,4vh,48px) clamp(18px,5vw,72px)}
+.handshake-diagram{display:flex;position:relative;flex:1;width:min(1100px,100%);min-height:390px;max-height:min(68vh,620px);margin:clamp(18px,3vh,38px) auto}
+.endpoint-label{display:none}
+.packet-lanes{display:block;width:100%;height:100%;padding:0;overflow:visible}
+.connection-diagram-svg{display:block;width:100%;height:100%;overflow:visible}
+.endpoint-life{stroke:#cbd5e2;stroke-width:2;stroke-dasharray:5 7}
+.time-line{stroke:#8998ac;stroke-width:2;opacity:.85}
+.endpoint-name,.time-name{font:700 18px 'Segoe UI',system-ui,sans-serif;letter-spacing:.12em;fill:#738198}
+.time-name{font-size:14px;fill:#8793a4}
+.packet-arrow{stroke:#3474c8;stroke-width:4;stroke-linecap:round;opacity:.56;transition:opacity .16s ease,stroke-width .16s ease}
+.packet-arrow{opacity:.9;stroke-width:5}
+.packet-arrow-tip{fill:#3474c8}
+.packet-step.synack .packet-arrow{stroke:#3474c8}.packet-step.synack .packet-arrow-tip{fill:#3474c8}
+.packet-step.ack .packet-arrow{stroke:#19865f}.packet-step.ack .packet-arrow-tip{fill:#19865f}
+.packet-step.fin .packet-arrow{stroke:#d28a31}.packet-step.fin .packet-arrow-tip{fill:#d28a31}
+.packet-step.finack .packet-arrow{stroke:#c85c5c}.packet-step.finack .packet-arrow-tip{fill:#c85c5c}
+.packet-label-box{fill:#fff;stroke:#d6dfeb;stroke-width:1.5;filter:drop-shadow(0 3px 5px #243b5b14)}
+.packet-label-text{font:700 16px 'Segoe UI',system-ui,sans-serif;fill:#42536b}
+.packet-step.is-active .packet-arrow{stroke-width:6;opacity:1}
+.packet-step.is-active .packet-label-box{stroke:#3474c8;stroke-width:2}
+.packet-step.synack.is-active .packet-label-box{stroke:#19865f}.packet-step.ack.is-active .packet-label-box{stroke:#7855b8}.packet-step.fin.is-active .packet-label-box{stroke:#d28a31}.packet-step.finack.is-active .packet-label-box{stroke:#c85c5c}
+.connection-status{margin-top:clamp(10px,2vh,20px)}
+@media(max-width:560px){.connection-card{padding:18px 9px}.handshake-diagram{min-height:350px;max-height:62vh;margin:14px auto}.endpoint-name{font-size:24px}.packet-arrow{stroke-width:5}.packet-label-text{font-size:24px}.connection-heading h1{font-size:clamp(30px,9vw,44px)}}
+@media(prefers-reduced-motion:reduce){.packet-arrow,.packet-label-box{transition:none!important}}
+
+
+/* Polished sequence diagram refinements */
+.connection-scene{background:radial-gradient(ellipse at 50% 48%,#fff 0%,#f5f8fc 58%,#edf2f8 100%)}
+.connection-card{position:relative;max-width:1600px;margin:auto;padding:clamp(22px,4vh,50px) clamp(24px,7vw,112px)}
+.connection-heading{position:relative;z-index:1}
+.connection-heading .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:6px 11px;border:1px solid #dce6f3;border-radius:999px;background:#fff;color:#69809c;font-size:10px;letter-spacing:.16em}
+.connection-heading h1{color:#1e2d43;letter-spacing:-.035em}
+.connection-heading p{color:#74839a}
+.handshake-diagram{transition:opacity .22s ease,transform .22s ease}
+.phase-switch .handshake-diagram{opacity:0;transform:translateY(8px) scale(.99)}
+.packet-lanes{isolation:isolate}
+.connection-diagram-svg{overflow:visible}
+.endpoint-life{stroke:#c8d4e2;stroke-width:2.5;stroke-dasharray:none;opacity:.85}
+.endpoint-name{font-size:17px;letter-spacing:.14em;fill:#7889a0}
+.packet-arrow{stroke-width:5;opacity:.7;filter:drop-shadow(0 2px 2px #273c5a18)}
+.packet-label-box{stroke-width:2;filter:drop-shadow(0 5px 10px #233b6020)}
+.packet-label-text{font-size:19px;fill:#2d3c52}
+.connection-status{margin-top:clamp(4px,1vh,12px);min-height:38px;color:#465a75;font-weight:600}
+.connection-dot{width:9px;height:9px;box-shadow:0 0 0 5px #e3a64018}
+.connection-scene.complete .connection-dot{box-shadow:0 0 0 5px #26a27118}
+#connection-skip{height:38px;padding:0 17px;border-radius:9px;box-shadow:0 5px 14px #3474c832;font-weight:600;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+#connection-skip:hover{background:#2864b3;box-shadow:0 7px 19px #3474c840;transform:translateY(-1px)}
+#connection-skip:active{transform:translateY(0)}
+@media(max-width:560px){.connection-heading .eyebrow{font-size:9px}.packet-label-text{font-size:17px}.endpoint-name{font-size:18px}}
+
+
+/* Tighter packet cadence and lighter heading scale */
+.connection-heading h1{font-size:clamp(26px,3.5vw,46px);font-weight:650;letter-spacing:-.025em;line-height:1.16;margin:8px 0}
+.connection-heading p{font-size:clamp(13px,1.15vw,16px);line-height:1.55}
+
+
+/* Distinct but soft packet colors */
+.connection-scene{background:radial-gradient(ellipse at 50% 45%,#fff 0%,#f4f8ff 52%,#edf3fa 100%)}
+.connection-scene[data-phase="teardown"]{background:radial-gradient(ellipse at 50% 45%,#fff 0%,#fff9f2 52%,#f8f1e9 100%)}
+.connection-heading .eyebrow{border-color:#cfe0f5;background:linear-gradient(135deg,#fff,#f1f6ff);color:#3474c8}
+.connection-scene[data-phase="teardown"] .connection-heading .eyebrow{border-color:#f0d7b6;background:linear-gradient(135deg,#fff,#fff6e9);color:#ad7026}
+.sender-life{stroke:#a9c9ef}.receiver-life{stroke:#a8d9c5}
+.packet-label-box.syn{fill:#eef5ff}.packet-label-box.synack{fill:#eaf8f1}.packet-label-box.ack{fill:#f3eefc}.packet-label-box.fin{fill:#fff4e5}.packet-label-box.finack{fill:#fff0ed}
+.packet-label-text.syn{fill:#2869b6}.packet-label-text.synack{fill:#18734f}.packet-label-text.ack{fill:#7048b2}.packet-label-text.fin{fill:#a86e1e}.packet-label-text.finack{fill:#b94b48}
+.packet-arrow.syn{stroke:#3474c8}.packet-arrow.synack{stroke:#3474c8}.packet-arrow.ack{stroke:#19865f}.packet-arrow.fin{stroke:#d28a31}.packet-arrow.finack{stroke:#c85c5c}
+
+
+/* Match the main dashboard palette: blue for connection, green for ACK, amber for FIN */
+.connection-scene{background:radial-gradient(ellipse at 50% 46%,#fff 0%,#f8faff 58%,#f1f4f8 100%)}
+.connection-scene[data-phase="teardown"]{background:radial-gradient(ellipse at 50% 46%,#fff 0%,#fbfaf6 58%,#f3f1ea 100%)}
+.connection-heading .eyebrow{border-color:#d6e4f5;background:#f8faff;color:var(--blue)}
+.connection-scene[data-phase="teardown"] .connection-heading .eyebrow{border-color:#e8dfc9;background:#fbfaf6;color:var(--amber)}
+.sender-life{stroke:#9dbde4}.receiver-life{stroke:#a7d7c2}
+.packet-label-box.syn,.packet-label-box.synack{fill:#eaf2ff;stroke:#3474c8}
+.packet-label-box.ack{fill:#e8f8f0;stroke:#19865f}
+.packet-label-box.fin,.packet-label-box.finack{fill:#fff4df;stroke:#a27622}
+.packet-label-text.syn,.packet-label-text.synack{fill:#2860ad}
+.packet-label-text.ack{fill:#19764f}
+.packet-label-text.fin,.packet-label-text.finack{fill:#986517}
+.packet-arrow.syn,.packet-arrow.synack{stroke:#3474c8}
+.packet-arrow.ack{stroke:#19865f}
+.packet-arrow.fin,.packet-arrow.finack{stroke:#a27622}
+
+
+/* Crossfade the main app and slide down into the next connection */
+.dashboard{opacity:1;transform:translateY(0) scale(1);filter:blur(0);transition:opacity .42s ease,transform .48s cubic-bezier(.2,.75,.25,1),filter .42s ease}
+.connection-intro .dashboard{opacity:0;transform:translateY(10px) scale(.992);filter:blur(2px);pointer-events:none}
+.connection-scene{transition:opacity .42s ease}
+.connection-scene.leaving{opacity:0}
+.handshake-diagram{will-change:opacity,transform}
+.phase-switch .handshake-diagram{opacity:0;transform:translateY(-42px);transition:opacity .2s ease,transform .22s cubic-bezier(.4,0,.8,.4)}
+.phase-enter .handshake-diagram{animation:connectionSlideIn .46s cubic-bezier(.2,.75,.25,1) both}
+@keyframes connectionSlideIn{from{opacity:0;transform:translateY(42px)}to{opacity:1;transform:translateY(0)}}
+
+
+/* Slide the entire scene, including heading and status, between phases */
+.phase-switch .connection-card{transform:translateY(-105vh);transition:transform .32s cubic-bezier(.55,0,.8,.35)}
+.phase-enter .connection-card{animation:connectionCardEnter .36s cubic-bezier(.2,.75,.25,1) both}
+@keyframes connectionCardEnter{from{transform:translateY(105vh)}to{transform:translateY(0)}}
+
+
+.phase-switch .handshake-diagram{opacity:1;transform:none;transition:none}
+.phase-enter .handshake-diagram{animation:none}
+
+
+/* Slide from the final connection phase into the main dashboard */
+.connection-scene.leaving{opacity:1}
+.connection-scene.leaving .connection-card{transform:translateY(-105vh);transition:transform .42s cubic-bezier(.55,0,.8,.35)}
+.connection-intro .dashboard{transform:translateY(52px) scale(.997);opacity:0;filter:blur(1px)}
+.dashboard{transition:opacity .42s ease,transform .42s cubic-bezier(.2,.75,.25,1),filter .42s ease}
+.connection-scene{background:radial-gradient(ellipse at 50% 42%,#fff 0%,#fff 68%,#f8faff 100%)}
+.connection-card{background:linear-gradient(180deg,#fff 0%,#fff 78%,#fbfcfe 100%)}
+.connection-scene[data-phase="teardown"]{background:radial-gradient(ellipse at 50% 42%,#fff 0%,#fff 68%,#faf9f5 100%)}
+
+
+/* Synchronized handoff: reveal the app while the intro card slides away */
+.connection-intro .site-header{opacity:0;transform:translateY(-12px)}
+.connection-revealing .dashboard{animation:dashboardReveal .56s cubic-bezier(.2,.75,.25,1) both}
+.connection-revealing .site-header{animation:headerReveal .48s cubic-bezier(.2,.75,.25,1) .06s both}
+.connection-scene.leaving .connection-card{transform:translateY(-110vh);transition:transform .56s cubic-bezier(.48,0,.78,.28)}
+@keyframes dashboardReveal{0%{opacity:0;transform:translateY(54px) scale(.995);filter:blur(1px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes headerReveal{0%{opacity:0;transform:translateY(-12px)}100%{opacity:1;transform:translateY(0)}}
+
+
+/* Keep initial dashboard entrance effects from competing with the scene handoff */
+.connection-presented .status-strip,
+.connection-presented .lab-grid>.card,
+.connection-presented .analysis-grid>.card{animation:none!important}
+.connection-intro .site-header{opacity:0;transform:translateY(-12px)}
+/* Use explicit keyframes for the exit so reset and first entry behave identically. */
+.connection-scene.leaving .connection-card{animation:connectionCardExit .56s cubic-bezier(.48,0,.78,.28) both;transition:none}
+@keyframes connectionCardExit{from{transform:translateY(0)}to{transform:translateY(-110vh)}}
+.connection-revealing .dashboard{animation:dashboardReveal .56s cubic-bezier(.2,.75,.25,1) both}
+.connection-revealing .site-header{animation:headerReveal .48s cubic-bezier(.2,.75,.25,1) .06s both}
+
+
+/* Reveal the dashboard in coordinated layers instead of one simultaneous flash */
+.connection-revealing .dashboard{animation:dashboardReveal .64s cubic-bezier(.2,.75,.25,1) both}
+.connection-revealing .site-header{animation:headerReveal .5s cubic-bezier(.2,.75,.25,1) .04s both}
+.connection-revealing .status-strip{animation:mainPanelReveal .34s cubic-bezier(.2,.75,.25,1) .12s both!important}
+.connection-revealing .lab-grid>.card{animation:mainPanelReveal .38s cubic-bezier(.2,.75,.25,1) both!important}
+.connection-revealing .lab-grid>.card:nth-child(1){animation-delay:.18s!important}
+.connection-revealing .lab-grid>.card:nth-child(2){animation-delay:.24s!important}
+.connection-revealing .lab-grid>.card:nth-child(3){animation-delay:.3s!important}
+.connection-revealing .analysis-grid>.card{animation:mainPanelReveal .36s cubic-bezier(.2,.75,.25,1) both!important}
+.connection-revealing .analysis-grid>.card:nth-child(1){animation-delay:.36s!important}
+.connection-revealing .analysis-grid>.card:nth-child(2){animation-delay:.42s!important}
+@keyframes mainPanelReveal{from{opacity:0;transform:translateY(12px) scale(.996)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){
+  .connection-revealing .dashboard,.connection-revealing .site-header,
+  .connection-revealing .status-strip,.connection-revealing .lab-grid>.card,
+  .connection-revealing .analysis-grid>.card{animation-duration:.01ms!important;animation-delay:0ms!important}
+}
+
+
+.connection-scene.leaving{opacity:0;transition:opacity .72s ease}
+
+
+/* Animate the main screen out and the reconnect scene in together. */
+.connection-returning .dashboard{animation:dashboardExitDown .48s cubic-bezier(.55,0,.8,.35) both}
+.connection-returning .site-header{animation:headerExitDown .4s ease both}
+.connection-scene.entering .connection-card{animation:connectionCardDropIn .5s cubic-bezier(.2,.75,.25,1) both}
+@keyframes dashboardExitDown{0%{opacity:1;transform:translateY(0);filter:blur(0)}100%{opacity:0;transform:translateY(54px);filter:blur(1px)}}
+@keyframes headerExitDown{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(18px)}}
+@keyframes connectionCardDropIn{0%{transform:translateY(-105vh)}100%{transform:translateY(0)}}
+
+
+/* Reset returns upward from the completed experiment to the connection sequence. */
+.connection-returning .dashboard{animation:dashboardExitUp .48s cubic-bezier(.55,0,.8,.35) both}
+.connection-returning .site-header{animation:headerExitUp .4s ease both}
+.connection-scene.entering .connection-card{animation:connectionCardLiftIn .5s cubic-bezier(.2,.75,.25,1) both}
+@keyframes dashboardExitUp{0%{opacity:1;transform:translateY(0);filter:blur(0)}100%{opacity:0;transform:translateY(-54px);filter:blur(1px)}}
+@keyframes headerExitUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-18px)}}
+@keyframes connectionCardLiftIn{0%{transform:translateY(105vh)}100%{transform:translateY(0)}}
+
+
+/* Quiet, text-only skip control in the lower-right corner */
+#connection-skip{position:absolute;right:clamp(18px,4vw,56px);bottom:clamp(14px,3vh,30px);height:auto;margin:0;padding:8px 2px;border:0;border-radius:0;background:transparent!important;color:#7b8798;box-shadow:none!important;font-size:12px;font-weight:500;letter-spacing:.04em;transition:color .16s ease}
+#connection-skip:hover{background:transparent!important;color:#3474c8;box-shadow:none!important;transform:none}
+#connection-skip:active{transform:none}
+#connection-skip:focus-visible{outline:2px solid #78a5eb;outline-offset:4px}
+
