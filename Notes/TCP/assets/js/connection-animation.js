@@ -36,8 +36,8 @@
     const marker = svgEl('marker',{id:'packet-arrowhead',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'8',markerHeight:'8',orient:'auto-start-reverse'});
     marker.appendChild(svgEl('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'context-stroke'}));
     defs.appendChild(marker); svg.appendChild(defs);
-    svg.appendChild(svgEl('line',{class:'endpoint-life sender-life',x1:'120',y1:'55',x2:'120',y2:'725'}));
-    svg.appendChild(svgEl('line',{class:'endpoint-life receiver-life',x1:'880',y1:'55',x2:'880',y2:'725'}));
+    svg.appendChild(svgEl('line',{class:'endpoint-life sender-life',x1:'120',y1:'55',x2:'120',y2:'755'}));
+    svg.appendChild(svgEl('line',{class:'endpoint-life receiver-life',x1:'880',y1:'55',x2:'880',y2:'755'}));
     const sender = svgEl('text',{class:'endpoint-name',x:'120',y:'35','text-anchor':'middle'}); sender.textContent='SENDER'; svg.appendChild(sender);
     const receiver = svgEl('text',{class:'endpoint-name',x:'880',y:'35','text-anchor':'middle'}); receiver.textContent='RECEIVER'; svg.appendChild(receiver);
     const yTop = mode === 'teardown' ? 125 : 150;
