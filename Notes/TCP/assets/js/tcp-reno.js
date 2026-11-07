@@ -128,7 +128,7 @@ function simulate(packetEdits = [], cfg = {}) {
     }
     if (!spec.dropped) enqueue({ type: 'data', time: spec.arrivalTime, packet: spec });
     else log.push(_logEntry('loss', `P${spec.seq}${spec.isRetx ? ` 重傳 #${spec.attempt}` : ''} 丟棄`,
-      '封包沒有抵達 Receiver。Sender 仍會等待累積 ACK 或 RTO。', null, spec.sendTime));
+      '封包段沒有抵達 Receiver。Sender 仍會等待累積 ACK 或 RTO。', null, spec.sendTime));
   }
 
   function sendNewData(time) {

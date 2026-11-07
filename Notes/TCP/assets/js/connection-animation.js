@@ -31,7 +31,7 @@
   }
   function drawRows(sequence, mode) {
     lanes.replaceChildren();
-    const svg = svgEl('svg',{class:'connection-diagram-svg',viewBox:'0 0 1000 760',role:'img','aria-label':'時間向下的 TCP 封包時序圖'});
+    const svg = svgEl('svg',{class:'connection-diagram-svg',viewBox:'0 0 1000 760',role:'img','aria-label':'時間向下的 TCP 封包段時序圖'});
     const defs = svgEl('defs');
     const marker = svgEl('marker',{id:'packet-arrowhead',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'8',markerHeight:'8',orient:'auto-start-reverse'});
     marker.appendChild(svgEl('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'context-stroke'}));
@@ -100,7 +100,7 @@
     const playPhase=async (phase,heading,subheading,messages) => {
       scene.dataset.phase=phase;
       title.textContent=heading; caption.textContent=subheading;
-      status.textContent=phase==='teardown' ? '依序關閉連線...' : '交換控制封包，完成連線建立';
+      status.textContent=phase==='teardown' ? '依序關閉連線...' : '交換控制封包段，完成連線建立';
       const movers=drawRows(steps[phase],phase);
       for(let i=0;i<messages.length;i++) {
         if(thisRun!==runId) return false;

@@ -63,7 +63,7 @@ const PROP    = window.PROP_DELAY;
 let canvas, ctx, chart;
 
 // ─────────────────────────────────────────────────────────
-// 時間橫向增加；每個封包固定一列，資料與 ACK 分開走線，避免交叉。
+// 時間橫向增加；每個封包段固定一列，資料與 ACK 分開走線，避免交叉。
 // ─────────────────────────────────────────────────────────
 const LABEL_W = 40;
 const PAD_RIGHT = 5;
@@ -107,7 +107,7 @@ let lastReceiverRowsSignature = null;
 function init() {
   canvas = document.createElement('canvas');
   canvas.setAttribute('id', 'seq-canvas');
-  canvas.setAttribute('aria-label', 'TCP Reno 封包時間軸。時間向右，每列代表一個序號；拖曳資料端點可調整抵達時間，右鍵可切換丟包。');
+  canvas.setAttribute('aria-label', 'TCP Reno 封包段時間軸。時間向右，每列代表一個序號；拖曳資料端點可調整抵達時間，右鍵可切換丟包。');
   seqScroll.innerHTML = '';
   seqScroll.appendChild(canvas);
   ctx = canvas.getContext('2d');
@@ -167,7 +167,7 @@ function init() {
     syncRwndControl();
     playbackTime = -1; hoverTime = null;
     renderAll();
-    showToast(`模擬已重置，總封包數設為 ${session.getMaxPackets()}。`);
+    showToast(`模擬已重置，總封包段數設為 ${session.getMaxPackets()}。`);
   };
   btnApplyPackets.addEventListener('click', applyMaxPackets);
   totalPacketsInput.addEventListener('keydown', e => {
@@ -217,7 +217,7 @@ function renderAll() {
   layoutCanvas(snap);
   drawDiagram(snap);
   renderTimeViews(snap, hoverTime);
-  packetLimitHint.textContent = `累積確認 ${session.getMaxPackets()} 個封包後停止`;
+  packetLimitHint.textContent = `累積確認 ${session.getMaxPackets()} 個封包段後停止`;
   refreshEventSequence(snap);
 }
 
@@ -274,10 +274,10 @@ function _dropAnimationPending(kind, seq, attempt = 0) {
 }
 
 function eventDescription(ev) {
-  if (ev.kind === 'loss') return { title: `P${ev.seq} LOST`, detail: '資料封包在路徑中斷；TCP 等待 Duplicate ACK 或 RTO 才調整壅塞視窗', tone: 'loss' };
+  if (ev.kind === 'loss') return { title: `P${ev.seq} LOST`, detail: '資料封包段在路徑中斷；TCP 等待 Duplicate ACK 或 RTO 才調整壅塞視窗', tone: 'loss' };
   if (ev.kind === 'ack-loss') return { title: `ACK ${ev.ackNum} LOST`, detail: 'ACK 回程中斷，Sender 不會收到此確認', tone: 'loss' };
-  if (ev.kind === 'retx-loss') return { title: `P${ev.seq} 重傳封包 LOST`, detail: `第 ${ev.attempt} 次重傳在路徑中遺失`, tone: 'loss' };
-  if (ev.kind === 'send' && ev.dropped) return { title: `P${ev.seq} LOST`, detail: '封包在路徑中遺失，等待 ACK 或 RTO', tone: 'loss' };
+  if (ev.kind === 'retx-loss') return { title: `P${ev.seq} 重傳封包段 LOST`, detail: `第 ${ev.attempt} 次重傳在路徑中遺失`, tone: 'loss' };
+  if (ev.kind === 'send' && ev.dropped) return { title: `P${ev.seq} LOST`, detail: '封包段在路徑中遺失，等待 ACK 或 RTO', tone: 'loss' };
   if (ev.kind === 'send') return { title: `P${ev.seq} · DATA 傳送`, detail: `SEQ=${ev.seq} 從 Sender 出發`, tone: 'data' };
   if (ev.kind === 'arrive') return { title: `P${ev.seq} · 抵達 Receiver`, detail: 'Receiver 收到資料並更新累積確認狀態', tone: 'receive' };
   if (ev.kind === 'ack') return { title: `ACK ${ev.ackNum}${ev.isDup ? ' · DUPLICATE ACK' : ' · 累積確認'}`, detail: ev.isDup ? `重複 ACK #${ev.dupN || 1} 回到 Sender` : `確認進度更新至 P${ev.ackNum}`, tone: ev.isDup ? 'dup' : 'ack' };
@@ -435,7 +435,7 @@ function drawDiagram(snap) {
   ctx.fillStyle = '#6b7a8e';
   ctx.font = '9px Segoe UI,system-ui,sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText('封包', 7, 12);
+  ctx.fillText('封包段', 7, 12);
   
   const tickStep = RTT * Math.max(1, Math.ceil(MAX_TIME / RTT / 12));
   ctx.font = '9px Consolas,Courier New,monospace';
@@ -1096,9 +1096,9 @@ function renderWindowPanels(t) {
   if (senderSignature !== lastSenderRowsSignature) {
   const senderScrollTop = wndSenderList.scrollTop;
   wndSenderList.innerHTML = '';
-  // 先判斷是否有任何封包
+  // 先判斷是否有任何封包段
   if (snap.senderPackets.length === 0) {
-    wndSenderList.innerHTML = '<div class="wnd-empty">此時尚無封包</div>';
+    wndSenderList.innerHTML = '<div class="wnd-empty">此時尚無封包段</div>';
   } else {
     for (const p of snap.senderPackets) {
       const inWnd = p.inSendWindow;
@@ -1146,7 +1146,7 @@ function renderWindowPanels(t) {
   const receiverScrollTop = wndRecvList.scrollTop;
   wndRecvList.innerHTML = '';
   if (snap.receiverPackets.length === 0) {
-    wndRecvList.innerHTML = '<div class="wnd-empty">此時尚無封包</div>';
+    wndRecvList.innerHTML = '<div class="wnd-empty">此時尚無封包段</div>';
   } else {
     for (const p of snap.receiverPackets) {
       const isNextExp = p.seq === (snap.receiverNextExpAck ?? snap.sndUna);
@@ -1157,7 +1157,7 @@ function renderWindowPanels(t) {
         RECEIVER_CSS[p.receiverState] ?? '',
         isNextExp && p.receiverState !== 'acked' ? 'is-expected' : '',
       ].filter(Boolean).join(' ');
-      row.setAttribute('aria-label', `P${p.seq}，${RECEIVER_LABEL[p.receiverState] ?? p.receiverState}${isNextExp && p.receiverState !== 'acked' ? '，下一個預期封包' : ''}`);
+      row.setAttribute('aria-label', `P${p.seq}，${RECEIVER_LABEL[p.receiverState] ?? p.receiverState}${isNextExp && p.receiverState !== 'acked' ? '，下一個預期封包段' : ''}`);
       row.title = `P${p.seq} · ${RECEIVER_LABEL[p.receiverState] ?? p.receiverState}${isNextExp && p.receiverState !== 'acked' ? ' · 下一個預期' : ''}`;
 
       let tagHtml = '';

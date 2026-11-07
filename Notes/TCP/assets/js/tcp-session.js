@@ -2,7 +2,7 @@
  * tcp-session.js — 使用者操作的狀態管理層
  *
  * 職責：
- *   1. 持有使用者可編輯的封包表（packetList）
+ *   1. 持有使用者可編輯的封包段表（packetList）
  *   2. 回應使用者操作（setArrival、toggleDrop、reset）
  *   3. 操作後呼叫 TCPReno.simulate()，將結果存為唯讀快照
  *   4. 將模擬結果保存為最新快照，供 UI 查詢
@@ -104,7 +104,7 @@ class TCPSession {
   getRwnd() { return this._rwnd === Infinity ? this._maxPackets + 1 : this._rwnd; }
 
   /**
-   * 拖曳封包尾端：改變 arrivalTime
+   * 拖曳封包段尾端：改變 arrivalTime
    * @param {number} seq
    * @param {number} newArrivalTime
    */
@@ -163,7 +163,7 @@ class TCPSession {
   // ── 查詢方法（唯讀）────────────────────────────
 
   /**
-   * 取得指定 seq 的封包規格（唯讀拷貝）
+   * 取得指定 seq 的封包段規格（唯讀拷貝）
    * @returns {Readonly<PacketSpec>|null}
    */
   getPacket(seq) {
@@ -172,7 +172,7 @@ class TCPSession {
   }
 
   /**
-   * 取得所有封包的唯讀陣列拷貝
+   * 取得所有封包段的唯讀陣列拷貝
    * @returns {Readonly<PacketSpec>[]}
    */
   getAllPackets() {
@@ -202,7 +202,7 @@ class TCPSession {
     this._ackArrivalOverrides.clear();
     this._retxArrivalOverrides.clear();
     this._packetEdits.clear();
-    // 初始窗口中的封包以同一時刻發送。
+    // 初始窗口中的封包段以同一時刻發送。
     for (let i = 1; i <= SESSION_CONFIG.initCwnd; i++) {
       this._packetEdits.set(i, {
         seq:         i,
@@ -232,8 +232,8 @@ class TCPSession {
   }
 
   /**
-   * 只找「原始（非重傳）」的封包
-   * 使用者拖曳或丟棄只能操作原始封包
+   * 只找「原始（非重傳）」的封包段
+   * 使用者拖曳或丟棄只能操作原始封包段
    */
   _findOriginal(seq) {
     return this.snapshot?.packets.find(p => p.seq === seq && !p.isRetx);

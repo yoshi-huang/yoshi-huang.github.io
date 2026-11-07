@@ -4,19 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#f3f5f8" />
-  <meta name="description" content="TCP 封包傳輸及壅塞控制" />
+  <meta name="description" content="TCP 封包段傳輸及壅塞控制" />
   <title>TCP｜傳輸控制協定</title>
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body class="connection-intro">
   <a class="skip-link" href="#main-content">跳至模擬內容</a>
   <header class="site-header">
-    <a class="brand" href="#main-content" aria-label="TCP Lab 首頁"><span class="brand-mark" aria-hidden="true">↗</span><strong>TCP Lab</strong></a>
+    <a class="brand" href="#main-content" aria-label="TCP Lab 首頁"><span class="brand-mark" aria-hidden="true">⬀</span><strong>TCP Lab</strong></a>
     <div class="header-actions"><button id="btn-reset" class="btn btn-ghost" type="button"><span aria-hidden="true">↻</span> 重新連線</button></div>
   </header>
   <main class="dashboard" id="main-content">
     <section class="status-strip" aria-label="目前 TCP 狀態">
-      <div class="sim-title"><span class="eyebrow">TCP RENO</span><strong>封包傳輸 與 壅塞控制</strong></div>
+      <div class="sim-title"><span class="eyebrow">TCP RENO</span><strong>封包段傳輸 及 壅塞控制</strong></div>
       <div class="metric"><span>壅塞視窗 <abbr title="Congestion Window">cwnd</abbr></span><b><span id="disp-cwnd">1</span><small>MSS</small></b></div>
       <div class="metric"><span>慢啟動門檻 <abbr title="Slow Start Threshold">ssthresh</abbr></span><b><span id="disp-ssthresh">8</span><small>MSS</small></b></div>
       <div class="metric"><span>下一個 ACK</span><b><span id="disp-nextack">1</span><small>seq</small></b></div>
@@ -24,28 +24,28 @@
       <div class="metric state-metric"><span>TCP 狀態</span><b><span class="state-badge slow-start" id="disp-state">Slow Start</span></b></div>
       <div class="metric initial-setting"><label for="initial-ssthresh">初始 ssthresh</label><div class="setting-inline"><input id="initial-ssthresh" name="initial-ssthresh" type="number" min="2" max="64" step="1" value="8" required inputmode="numeric" autocomplete="off" aria-label="初始慢啟動門檻，單位 MSS"><span>MSS</span><button id="btn-apply-ssthresh" type="button">套用</button></div></div>
       <div class="metric initial-setting"><label for="initial-rto">初始 RTO</label><div class="setting-inline"><input id="initial-rto" name="initial-rto" type="number" min="500" max="60000" step="100" value="500" required inputmode="numeric" autocomplete="off" aria-label="初始重傳逾時，單位毫秒，最小 500"><span>ms</span><button id="btn-apply-rto" type="button">套用</button></div></div>
-      <div class="metric initial-setting"><label for="total-packets">總封包數</label><div class="setting-inline"><input id="total-packets" name="total-packets" type="number" min="1" max="99" step="1" value="45" required inputmode="numeric" autocomplete="off" aria-label="模擬總封包數，1 至 99"><span>個</span><button id="btn-apply-packets" type="button">套用</button></div></div>
+      <div class="metric initial-setting"><label for="total-packets">總封包段數</label><div class="setting-inline"><input id="total-packets" name="total-packets" type="number" min="1" max="99" step="1" value="45" required inputmode="numeric" autocomplete="off" aria-label="總封包段數，1 至 99"><span>個</span><button id="btn-apply-packets" type="button">套用</button></div></div>
     </section>
 
-    <section class="lab-grid" aria-label="封包時序與即時傳輸快照">
+    <section class="lab-grid" aria-label="封包段時序與即時傳輸快照">
       <section class="card wnd-panel wnd-sender" id="wnd-sender" aria-labelledby="sender-title">
         <div class="snapshot-head"><span class="endpoint-icon sender-icon" aria-hidden="true">↑</span><div><h2 id="sender-title">Sender</h2><small>傳送端</small></div><span class="wnd-time" id="wnd-sender-time">—</span></div>
-        <div class="wnd-meta" id="wnd-sender-meta">移動游標查看狀態</div><div class="matrix-note">封包序號 · min(cwnd, rwnd) 傳送範圍</div>
+        <div class="wnd-meta" id="wnd-sender-meta">移動游標查看狀態</div><div class="matrix-note">封包段序號 · min(cwnd, rwnd) 傳送範圍</div>
         <div class="wnd-list" id="wnd-sender-list"><div class="wnd-empty">移動游標至時序圖</div></div>
         <div class="mini-legend" aria-label="傳送端顏色圖例"><span><i class="swatch s-acked"></i>已確認</span><span><i class="swatch s-in-flight"></i>傳送中</span><span><i class="swatch s-retx-flight"></i>重傳</span><span><i class="swatch s-dropped"></i>遺失</span><span><i class="swatch s-not-sent"></i>未送</span></div>
       </section>
 
       <section class="card seq-card" aria-labelledby="diagram-title">
-        <div class="diagram-top"><div class="diagram-top-head"><div><h1 id="diagram-title">封包時序圖</h1><span class="diagram-subtitle">時間向右 · 每個序號各自一列</span></div><div class="rwnd-control" aria-label="接收視窗設定"><label for="rwnd-input"><span>接收視窗 </span><abbr title="Receiver Advertised Window">rwnd</abbr></label><input id="rwnd-input" type="range" min="1" max="49" step="1" value="49" aria-label="即時調整接收視窗 rwnd；最大有限值等於總封包數，最右側為無上限"><output id="rwnd-value" for="rwnd-input">無上限</output></div></div><div class="seq-legend" aria-label="時序圖圖例"><span><i class="legend-line data-line"></i>資料</span><span><i class="legend-line ack-line"></i>ACK 回傳</span><span><i class="legend-line dup-ack-line"></i>重複 ACK</span><span><i class="legend-line drop-line"></i>丟棄</span><span><i class="legend-line retx-line"></i>重傳</span></div></div>
-        <div class="seq-scroll" id="seq-scroll"><canvas id="seq-canvas" aria-label="TCP Reno 封包傳輸時序圖。拖曳資料封包端點調整抵達時間，右鍵可丟棄封包。"></canvas></div>
+        <div class="diagram-top"><div class="diagram-top-head"><div><h1 id="diagram-title">封包段時序圖</h1><span class="diagram-subtitle">時間向右 · 每個序號各自一列</span></div><div class="rwnd-control" aria-label="接收視窗設定"><label for="rwnd-input"><span>接收視窗 </span><abbr title="Receiver Advertised Window">rwnd</abbr></label><input id="rwnd-input" type="range" min="1" max="49" step="1" value="49" aria-label="即時調整接收視窗 rwnd；最大有限值等於總封包段數，最右側為無上限"><output id="rwnd-value" for="rwnd-input">無上限</output></div></div><div class="seq-legend" aria-label="時序圖圖例"><span><i class="legend-line data-line"></i>資料</span><span><i class="legend-line ack-line"></i>ACK 回傳</span><span><i class="legend-line dup-ack-line"></i>重複 ACK</span><span><i class="legend-line drop-line"></i>丟棄</span><span><i class="legend-line retx-line"></i>重傳</span></div></div>
+        <div class="seq-scroll" id="seq-scroll"><canvas id="seq-canvas" aria-label="TCP Reno 封包段傳輸時序圖。拖曳資料封包段端點調整抵達時間，右鍵可丟棄封包段。"></canvas></div>
         <div class="time-control"><label for="time-scrubber">模擬時間</label><input id="time-scrubber" name="simulation-time" type="range" min="0" max="10000" step="1" value="10000" aria-label="拖曳以檢視模擬時間"><output id="time-readout" for="time-scrubber">t=—</output><span class="time-hint" id="packet-limit-hint">累積確認後停止</span></div>
-        <div class="event-controls" aria-label="事件動畫播放控制"><button id="event-step" class="btn" type="button">▶▏ 單步</button><button id="event-play" class="btn btn-primary" type="button">▶ 播放</button><button id="event-pause" class="btn" type="button" disabled>⏸ 暫停</button><span id="event-caption" aria-live="polite">選擇單步或播放，逐事件觀察 TCP</span></div>
+        <div class="event-controls" aria-label="事件動畫播放控制"><button id="event-step" class="btn" type="button">▶▏ 單步</button><button id="event-play" class="btn btn-primary" type="button">▶ 播放</button><button id="event-pause" class="btn" type="button" disabled>⏸ 暫停</button><span id="event-caption" aria-live="polite">選擇單步或播放，逐事件觀察</span></div>
       </section>
 
       <section class="card wnd-panel wnd-receiver" id="wnd-receiver" aria-labelledby="receiver-title">
         <div class="snapshot-head"><span class="endpoint-icon receiver-icon" aria-hidden="true">↓</span><div><h2 id="receiver-title">Receiver</h2><small>接收端</small></div><span class="wnd-time" id="wnd-receiver-time">—</span></div>
         <div class="wnd-meta" id="wnd-receiver-meta">移動游標查看狀態</div>
-        <div class="matrix-note">封包序號 · 下一個預期封包外框</div>
+        <div class="matrix-note">封包段序號 · 下一個預期封包段外框</div>
         <div class="wnd-list" id="wnd-receiver-list"><div class="wnd-empty">移動游標至時序圖</div></div>
         <div class="mini-legend" aria-label="接收端顏色圖例"><span><i class="swatch r-acked"></i>已確認</span><span><i class="swatch r-arrived-ooo"></i>已收到</span><span><i class="swatch r-not-arrived"></i>未收到</span><span><i class="swatch r-dropped"></i>遺失</span></div>
       </section>
