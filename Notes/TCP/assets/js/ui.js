@@ -97,6 +97,7 @@ let eventSequenceSnapshot = null;
 let lastCompletedEventCursor = null;
 let activeAnimationEvents = [];
 let activeAnimationProgress = 0;
+let activeAnimationStartTime = -1;
 let lastSenderRowsSignature = null;
 let lastReceiverRowsSignature = null;
 
@@ -308,6 +309,7 @@ function playNextEvent(continuePlaying) {
     eventCaption.textContent = `同時發生 ${batch.length} 個事件 · ${titles}${remainder}`;
   }
   const from = Math.min(playbackTime, batchTime);
+  activeAnimationStartTime = from;
   const start = performance.now();
   const duration = batchEvents.some(ev => ev.kind === 'timeout') ? 1100
     : batchEvents.some(ev => ev.kind === 'ack' || ev.kind === 'ack-loss') ? 650 : 580;
@@ -343,6 +345,7 @@ function stopEventPlayback() {
   eventPauseBtn.disabled = true;
   activeAnimationEvents = [];
   drawDiagram(session.snapshot);
+  activeAnimationStartTime = -1;
 }
 
 function pauseEventPlayback() {
@@ -578,7 +581,7 @@ function drawInFlightPackets(t) {
 function drawAnimatedEventPacket() {
   for (const ev of activeAnimationEvents) {
     if (['loss', 'ack-loss', 'retx-loss'].includes(ev.kind)) {
-      drawLossBurst(ev, activeAnimationProgress);
+      drawLossBurst(ev, activeAnimationProgress, activeAnimationStartTime, playbackTime);
     } else if (ev.kind === 'timeout') {
       const cx = tx(ev.t), cy = rowY(ev.seq) + ROW_H * 0.49;
       ctx.save(); ctx.strokeStyle = '#e0a24d'; ctx.lineWidth = 2;
@@ -588,36 +591,37 @@ function drawAnimatedEventPacket() {
   }
 }
 
-function drawLossBurst(ev, progress) {
-  let x, startX, y, packetColor, label;
+function drawLossBurst(ev, progress, animationStartTime, playheadTime) {
+  let lossTime, sendTime, y, packetColor, label;
   if (ev.kind === 'loss') {
     const pkt = session.getPacket(ev.seq);
-    const start = ev.t;
-    const end = pkt?.arrivalTime ?? start + PROP;
-    startX = tx(start);
-    x = tx(start + (end - start) * 0.55);
+    sendTime = ev.t;
+    const end = pkt?.arrivalTime ?? sendTime + PROP;
+    lossTime = sendTime + (end - sendTime) * 0.55;
     y = rowY(ev.seq) + ROW_H * 0.22;
     packetColor = '#3474c8'; label = `SEQ ${ev.seq}`;
   } else if (ev.kind === 'retx-loss') {
-    startX = tx(ev.tSend);
-    x = tx(ev.tSend + (ev.tArrive - ev.tSend) * 0.55);
+    sendTime = ev.tSend;
+    lossTime = sendTime + (ev.tArrive - sendTime) * 0.55;
     y = rowY(ev.seq) + ROW_H * 0.48;
     packetColor = '#7855b8'; label = `RTX ${ev.seq}`;
   } else {
-    startX = tx(ev.tSend);
-    x = tx(ev.tSend + (ev.tArrive - ev.tSend) * 0.55);
+    sendTime = ev.tSend;
+    lossTime = sendTime + (ev.tArrive - sendTime) * 0.55;
     y = rowY(ev.seq) + ROW_H * (0.74 + Math.min(ev.dupN ? 1 : 0, 1) * 0.07);
     packetColor = ev.isDup ? '#c68b24' : '#19865f'; label = `ACK ${ev.ackNum}`;
   }
 
+  const startTime = Math.max(sendTime, Math.min(lossTime, animationStartTime));
+  const currentTime = Math.max(startTime, Math.min(lossTime, playheadTime));
+  const x = tx(lossTime);
+  const packetX = tx(currentTime);
   ctx.save();
-  const impactProgress = Math.max(0, Math.min(1, (progress - 0.16) / 0.84));
+  const impactProgress = Math.max(0, Math.min(1, (progress - 0.78) / 0.22));
   const burstAlpha = Math.max(0, 1 - impactProgress);
-  if (progress < 0.3) {
-    const moveProgress = Math.min(1, progress / 0.3);
-    const packetX = startX + (x - startX) * moveProgress;
-    const scale = Math.max(0.35, 1 - moveProgress * 0.55);
-    ctx.globalAlpha = Math.max(0, 1 - moveProgress * 0.7);
+  if (progress < 0.96) {
+    const scale = Math.max(0.35, 1 - impactProgress * 0.65);
+    ctx.globalAlpha = progress < 0.78 ? 1 : burstAlpha;
     ctx.shadowColor = '#db4f4f'; ctx.shadowBlur = 12;
     ctx.fillStyle = packetColor;
     ctx.beginPath(); ctx.roundRect(packetX - 18 * scale, y - 6 * scale, 36 * scale, 12 * scale, 3); ctx.fill();
@@ -625,7 +629,7 @@ function drawLossBurst(ev, progress) {
     ctx.fillText(label, packetX, y + 2.5 * scale);
   }
 
-  if (progress >= 0.16) {
+  if (progress >= 0.78) {
     const ringRadius = 3 + impactProgress * 18;
     ctx.globalAlpha = burstAlpha * 0.8;
     ctx.strokeStyle = '#dc4d4d'; ctx.lineWidth = 2;
