@@ -6,12 +6,14 @@
 
 const DEFAULT_CONFIG = Object.freeze({
   initCwnd: 1,
-  initSsthresh: 4,
+  initSsthresh: 8,
+  rwnd: Infinity,
+  abcLimit: 2,
   propDelay: 60,
   sendSpacing: 0,
   dupAckThresh: 3,
   minSsthresh: 2,
-  maxPackets: 48,
+  maxPackets: 45,
   initialRto: 500,
   minRto: 500,
   maxRto: 60000,
@@ -32,6 +34,10 @@ const LOG_ICON = Object.freeze({
 
 function simulate(packetEdits = [], cfg = {}) {
   const C = { ...DEFAULT_CONFIG, ...cfg };
+  const configuredAbcLimit = Number(C.abcLimit);
+  C.abcLimit = Number.isFinite(configuredAbcLimit)
+    ? Math.max(1, Math.min(2, configuredAbcLimit))
+    : DEFAULT_CONFIG.abcLimit;
   const edits = new Map(packetEdits.map(p => [p.seq, p]));
   const droppedRetx = new Set(C.droppedRetxKeys || []);
   const droppedAcks = new Set(C.droppedAckKeys || []);
@@ -56,6 +62,7 @@ function simulate(packetEdits = [], cfg = {}) {
   let dupAckCount = 0;
   let recover = 0;
   let caAckCredit = 0;
+  let slowStartAckLimit = C.abcLimit;
   let timerGeneration = 0;
   let timerActive = false;
   let rto = C.initialRto;
@@ -69,7 +76,7 @@ function simulate(packetEdits = [], cfg = {}) {
   let lastSenderAckTime = null;
 
   const initial = Object.freeze({
-    time: 0, cwnd, ssthresh, tcpPhase: phase, dupAckCount,
+    time: 0, cwnd, ssthresh, rwnd: C.rwnd, tcpPhase: phase, dupAckCount,
     nextExpAck: receiverNext, receiverNextExpAck: receiverNext,
     senderAck, highestSent, rto, rtoDeadline: null,
     lastReceiverAck, lastReceiverAckTime, lastSenderAck, lastSenderAckTime,
@@ -85,7 +92,7 @@ function simulate(packetEdits = [], cfg = {}) {
 
   function pushState(time) {
     stateTimeline.push(Object.freeze({
-      time, cwnd, ssthresh, tcpPhase: phase, dupAckCount,
+      time, cwnd, ssthresh, rwnd: C.rwnd, tcpPhase: phase, dupAckCount,
       nextExpAck: receiverNext, receiverNextExpAck: receiverNext,
       senderAck, highestSent, rto,
       rtoDeadline: timerActive ? currentRtoDeadline : null,
@@ -126,7 +133,7 @@ function simulate(packetEdits = [], cfg = {}) {
 
   function sendNewData(time) {
     let flightAndReserved = [...sentSeqs, ...reservedSeqs].filter(seq => seq > senderAck).length;
-    const segmentLimit = Math.floor(cwnd + 1e-9);
+    const segmentLimit = Math.floor(Math.min(cwnd, C.rwnd) + 1e-9);
     let index = 0;
     while (nextSeq <= C.maxPackets && flightAndReserved < segmentLimit) {
       const seq = nextSeq++;
@@ -170,12 +177,15 @@ function simulate(packetEdits = [], cfg = {}) {
   }
 
   function applyCongestionAvoidance(ackedSegments) {
-    caAckCredit += ackedSegments / Math.max(cwnd, 1);
-    if (caAckCredit >= 1) {
-      const increase = Math.floor(caAckCredit);
-      cwnd += increase;
-      caAckCredit -= increase;
+    // RFC 3465 section 2.1: accumulate acknowledged bytes, then add one SMSS
+    // when at least cwnd bytes have been acknowledged. Units here are MSS.
+    caAckCredit += ackedSegments;
+    if (caAckCredit >= cwnd) {
+      caAckCredit -= cwnd;
+      cwnd += 1;
+      return true;
     }
+    return false;
   }
 
   function sendInitialWindow() {
@@ -267,15 +277,19 @@ function simulate(packetEdits = [], cfg = {}) {
             sendRetransmission(missing, now, 'Partial ACK');
           }
         } else if (phase === Phase.SLOW_START) {
-          cwnd += newlyAcked;
+          const appliedAckLimit = slowStartAckLimit;
+          const increase = Math.min(newlyAcked, appliedAckLimit);
+          cwnd += increase;
           if (cwnd >= ssthresh) {
-            cwnd = ssthresh;
             phase = Phase.CONG_AVOID;
+            caAckCredit = 0;
+            slowStartAckLimit = C.abcLimit;
           }
-          log.push(_logEntry('normal', `新 ACK ${senderAck}`, `Slow Start：cwnd 增加 ${newlyAcked} MSS，目前 ${cwnd} MSS。`, null, now));
+          log.push(_logEntry('normal', `新 ACK ${senderAck}`, `Slow Start（ABC，L=${appliedAckLimit} MSS）：此 ACK 確認 ${newlyAcked} MSS，cwnd 增加 ${increase} MSS，目前 ${cwnd} MSS。`, null, now));
         } else {
-          applyCongestionAvoidance(newlyAcked);
-          log.push(_logEntry('normal', `新 ACK ${senderAck}`, `Congestion Avoidance：cwnd = ${cwnd.toFixed(2)} MSS。`, null, now));
+          const grew = applyCongestionAvoidance(newlyAcked);
+          log.push(_logEntry('normal', `新 ACK ${senderAck}`,
+            `Congestion Avoidance（ABC）：本次確認 ${newlyAcked} MSS；bytes_acked 餘額 ${caAckCredit.toFixed(2)} MSS${grew ? '，達到 cwnd 後增加 1 MSS' : ''}；cwnd = ${cwnd.toFixed(2)} MSS。`, null, now));
         }
 
         armTimer(now, true);
@@ -322,6 +336,7 @@ function simulate(packetEdits = [], cfg = {}) {
       ssthresh = Math.max(C.minSsthresh, Math.floor(flightSize / 2));
       cwnd = 1;
       phase = Phase.SLOW_START;
+      slowStartAckLimit = 1;
       dupAckCount = 0;
       recover = 0;
       caAckCredit = 0;
@@ -348,7 +363,7 @@ function simulate(packetEdits = [], cfg = {}) {
   stateTimeline.sort((a, b) => a.time - b.time);
 
   const finalState = Object.freeze({
-    cwnd, ssthresh, tcpPhase: phase, dupAckCount,
+    cwnd, ssthresh, rwnd: C.rwnd, tcpPhase: phase, dupAckCount,
     nextExpAck: senderAck + 1, receiverNextExpAck: receiverNext,
     senderAck, highestSent, recover, rto, srtt, rttvar,
     rtoDeadline: timerActive ? currentRtoDeadline : null,
@@ -404,7 +419,7 @@ function queryAt(drawEvents, packetSpecs, time, cfg = {}, stateTimeline = []) {
 
     senderPackets.push(Object.freeze({
       seq, senderState,
-      inCwndWindow: seq >= senderAck + 1 && seq <= senderAck + Math.floor(state.cwnd),
+      inSendWindow: seq >= senderAck + 1 && seq <= senderAck + Math.floor(Math.min(state.cwnd, C.rwnd)),
     }));
     receiverPackets.push(Object.freeze({ seq, receiverState }));
   }
@@ -412,12 +427,12 @@ function queryAt(drawEvents, packetSpecs, time, cfg = {}, stateTimeline = []) {
   return Object.freeze({
     t: time, cumAck: receiverCumAck, senderCumAck: senderAck, receiverCumAck,
     receiverNextExpAck, sndUna: senderAck + 1, cwnd: state.cwnd,
-    ssthresh: state.ssthresh, tcpPhase: state.tcpPhase,
+    ssthresh: state.ssthresh, rwnd: C.rwnd, tcpPhase: state.tcpPhase,
     dupAckCount: state.dupAckCount, nextExpAck: senderAck + 1,
     rto: state.rto, rtoDeadline: state.rtoDeadline,
     lastReceiverAck: state.lastReceiverAck, lastReceiverAckTime: state.lastReceiverAckTime,
     lastSenderAck: state.lastSenderAck, lastSenderAckTime: state.lastSenderAckTime,
-    senderWndEnd: senderAck + Math.floor(state.cwnd),
+    senderWndEnd: senderAck + Math.floor(Math.min(state.cwnd, C.rwnd)),
     senderPackets: Object.freeze(senderPackets), receiverPackets: Object.freeze(receiverPackets),
   });
 }

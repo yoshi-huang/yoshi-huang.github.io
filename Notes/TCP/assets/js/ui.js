@@ -30,6 +30,8 @@ const initialRtoInput = $('initial-rto');
 const btnApplyRto = $('btn-apply-rto');
 const totalPacketsInput = $('total-packets');
 const btnApplyPackets = $('btn-apply-packets');
+const rwndInput = $('rwnd-input');
+const rwndValue = $('rwnd-value');
 const packetLimitHint = $('packet-limit-hint');
 const timeScrubber = $('time-scrubber');
 const timeReadout = $('time-readout');
@@ -90,7 +92,10 @@ let playingEvents = false;
 let playbackTime = -1;
 let playbackIndex = 0;
 let eventSequence = [];
-let activeAnimationEvent = null;
+let dropSequenceIndex = new Map();
+let eventSequenceSnapshot = null;
+let lastCompletedEventCursor = null;
+let activeAnimationEvents = [];
 let activeAnimationProgress = 0;
 let lastSenderRowsSignature = null;
 let lastReceiverRowsSignature = null;
@@ -158,6 +163,7 @@ function init() {
     stopEventPlayback();
     if (!session.setMaxPackets(Number(totalPacketsInput.value))) return;
     totalPacketsInput.value = session.getMaxPackets();
+    syncRwndControl();
     playbackTime = -1; hoverTime = null;
     renderAll();
     showToast(`模擬已重置，總封包數設為 ${session.getMaxPackets()}。`);
@@ -167,8 +173,17 @@ function init() {
     if (e.key === 'Enter') applyMaxPackets();
   });
 
+  syncRwndControl();
+  rwndInput.addEventListener('input', () => {
+    stopEventPlayback();
+    session.setRwnd(Number(rwndInput.value));
+    syncRwndControl();
+    renderAll();
+  });
+
   timeScrubber.addEventListener('input', () => {
     stopEventPlayback();
+    lastCompletedEventCursor = null;
     hoverTime = MAX_TIME * (Number(timeScrubber.value) / Number(timeScrubber.max));
     playbackTime = hoverTime;
     refreshEventSequence(session.snapshot);
@@ -179,7 +194,9 @@ function init() {
 
   eventStepBtn.addEventListener('click', () => playNextEvent(false));
   eventPlayBtn.addEventListener('click', () => {
-    if (playbackTime < 0 || playbackTime >= MAX_TIME) { playbackTime = -1; playbackIndex = 0; }
+    if (playbackTime < 0 || playbackIndex >= eventSequence.length) {
+      playbackTime = -1; playbackIndex = 0; lastCompletedEventCursor = null;
+    }
     playingEvents = true;
     eventPlayBtn.disabled = true;
     eventPauseBtn.disabled = false;
@@ -203,7 +220,21 @@ function renderAll() {
   refreshEventSequence(snap);
 }
 
+function formatRwnd(value) {
+  return value === session.getMaxPackets() + 1 ? '無上限' : `${value} MSS`;
+}
+
+function syncRwndControl() {
+  rwndInput.max = String(session.getMaxPackets() + 1);
+  rwndInput.value = String(session.getRwnd());
+  rwndValue.value = formatRwnd(session.getRwnd());
+}
+
 function refreshEventSequence(snap) {
+  if (snap !== eventSequenceSnapshot) {
+    eventSequenceSnapshot = snap;
+    lastCompletedEventCursor = null;
+  }
   eventSequence = snap.drawEvents.flatMap((ev, sourceIndex) => {
     if (ev.kind === 'send' && ev.dropped) {
       const pkt = session.getPacket(ev.seq);
@@ -219,8 +250,26 @@ function refreshEventSequence(snap) {
     return [{ ev, sourceIndex, time: ev.tArrive ?? ev.tSend ?? ev.t ?? 0 }];
   })
     .sort((a, b) => a.time - b.time || a.sourceIndex - b.sourceIndex);
-  playbackIndex = eventSequence.findIndex(item => item.time > playbackTime + 0.001);
+  dropSequenceIndex = new Map();
+  eventSequence.forEach((item, index) => {
+    if (['loss', 'ack-loss', 'retx-loss'].includes(item.ev.kind)) {
+      dropSequenceIndex.set(_dropEventKey(item.ev), index);
+    }
+  });
+  playbackIndex = eventSequence.findIndex(item => item.time > playbackTime + 0.001
+    || (lastCompletedEventCursor
+      && Math.abs(item.time - lastCompletedEventCursor.time) <= 0.001
+      && item.sourceIndex > lastCompletedEventCursor.sourceIndex));
   if (playbackIndex < 0) playbackIndex = eventSequence.length;
+}
+
+function _dropEventKey(ev) {
+  return `${ev.kind}:${ev.seq}:${ev.attempt ?? 0}`;
+}
+
+function _dropAnimationPending(kind, seq, attempt = 0) {
+  const index = dropSequenceIndex.get(`${kind}:${seq}:${attempt}`);
+  return index !== undefined && index >= playbackIndex;
 }
 
 function eventDescription(ev) {
@@ -237,32 +286,49 @@ function eventDescription(ev) {
 }
 
 function playNextEvent(continuePlaying) {
-  refreshEventSequence(session.snapshot);
+  // Keep the cursor advanced by the previous event. Recomputing it from
+  // playbackTime here skips sibling events that share the same timestamp.
   if (playbackIndex >= eventSequence.length) {
     if (continuePlaying) stopEventPlayback();
     eventCaption.textContent = '已播放至目前模擬的最後事件';
     return;
   }
-  const item = eventSequence[playbackIndex];
-  const ev = item.ev;
-  const description = eventDescription(ev);
-  eventCaption.textContent = `${description.title} · ${description.detail}`;
-  const from = Math.min(playbackTime, item.time);
+  const firstItem = eventSequence[playbackIndex];
+  const batchTime = firstItem.time;
+  let batchEnd = playbackIndex + 1;
+  while (batchEnd < eventSequence.length && Math.abs(eventSequence[batchEnd].time - batchTime) <= 0.001) batchEnd++;
+  const batch = eventSequence.slice(playbackIndex, batchEnd);
+  const batchEvents = batch.map(item => item.ev);
+  const descriptions = batchEvents.map(eventDescription);
+  if (batch.length === 1) {
+    eventCaption.textContent = `${descriptions[0].title} · ${descriptions[0].detail}`;
+  } else {
+    const titles = descriptions.slice(0, 3).map(d => d.title).join('、');
+    const remainder = batch.length > 3 ? ` 等 ${batch.length} 個事件` : '';
+    eventCaption.textContent = `同時發生 ${batch.length} 個事件 · ${titles}${remainder}`;
+  }
+  const from = Math.min(playbackTime, batchTime);
   const start = performance.now();
-  const duration = ev.kind === 'timeout' ? 1100 : ev.kind === 'ack' ? 650 : 580;
+  const duration = batchEvents.some(ev => ev.kind === 'timeout') ? 1100
+    : batchEvents.some(ev => ev.kind === 'ack' || ev.kind === 'ack-loss') ? 650 : 580;
   const animate = now => {
     const progress = Math.min(1, (now - start) / duration);
-    activeAnimationEvent = ev;
+    activeAnimationEvents = batchEvents;
     activeAnimationProgress = progress;
-    playbackTime = from + (item.time - from) * (progress * progress * (3 - 2 * progress));
+    playbackTime = from + (batchTime - from) * (progress * progress * (3 - 2 * progress));
     hoverTime = playbackTime;
     revealTimelineTime(playbackTime);
     drawDiagram(session.snapshot);
     renderTimeViews(session.snapshot, playbackTime);
     if (progress < 1) animationFrame = requestAnimationFrame(animate);
     else {
-      playbackTime = item.time;
-      playbackIndex++;
+      playbackTime = batchTime;
+      lastCompletedEventCursor = { time: batchTime, sourceIndex: batch[batch.length - 1].sourceIndex };
+      playbackIndex = batchEnd;
+      activeAnimationEvents = [];
+      activeAnimationProgress = 0;
+      drawDiagram(session.snapshot);
+      renderTimeViews(session.snapshot, playbackTime);
       if (continuePlaying && playingEvents) setTimeout(() => playNextEvent(true), 180);
       else if (!continuePlaying) eventPauseBtn.disabled = true;
     }
@@ -275,7 +341,7 @@ function stopEventPlayback() {
   cancelAnimationFrame(animationFrame);
   eventPlayBtn.disabled = false;
   eventPauseBtn.disabled = true;
-  activeAnimationEvent = null;
+  activeAnimationEvents = [];
   drawDiagram(session.snapshot);
 }
 
@@ -457,45 +523,52 @@ function drawInFlightPackets(t) {
 
   for (const ev of snap.drawEvents) {
     if (ev.kind === 'send') {
-      if (activeAnimationEvent?.kind === 'loss' && activeAnimationEvent.seq === ev.seq) continue;
+      if (activeAnimationEvents.some(active => active.kind === 'loss' && active.seq === ev.seq)) continue;
       const pkt = session.getPacket(ev.seq);
       const start = ev.t, end = pkt?.arrivalTime ?? start + PROP;
       if (end <= start) continue;
       const lossTime = start + (end - start) * 0.55;
       if (ev.dropped) {
-        if (t >= start && t < lossTime) drawPacket(tx(start + (lossTime - start) * ((t - start) / (lossTime - start))), rowY(ev.seq) + ROW_H * 0.22, '#3474c8', `SEQ ${ev.seq}`);
-        else if (t >= lossTime - 8 && t < lossTime + 24) drawPacket(tx(lossTime), rowY(ev.seq) + ROW_H * 0.22, '#c84f4f', '', true);
+        const pendingDropAnimation = _dropAnimationPending('loss', ev.seq);
+        if (pendingDropAnimation && t >= start) {
+          const progress = Math.max(0, Math.min(1, (t - start) / Math.max(1, lossTime - start)));
+          drawPacket(tx(start + (lossTime - start) * progress), rowY(ev.seq) + ROW_H * 0.22, '#3474c8', `SEQ ${ev.seq}`);
+        } else if (!pendingDropAnimation && t >= lossTime - 8 && t < lossTime + 24) {
+          drawPacket(tx(lossTime), rowY(ev.seq) + ROW_H * 0.22, '#c84f4f', '', true);
+        }
       } else if (t >= start && t < end) {
         const progress = (t - start) / (end - start);
         drawPacket(tx(start + (end - start) * progress), rowY(ev.seq) + ROW_H * 0.22, '#3474c8', `SEQ ${ev.seq}`);
       }
     } else if (ev.kind === 'retx') {
-      if (activeAnimationEvent?.kind === 'retx-loss' && activeAnimationEvent.seq === ev.seq
-        && activeAnimationEvent.attempt === ev.attempt) continue;
+      if (activeAnimationEvents.some(active => active.kind === 'retx-loss' && active.seq === ev.seq
+        && active.attempt === ev.attempt)) continue;
       const start = ev.tSend, end = ev.tArrive;
       const lossTime = start + (end - start) * 0.55;
+      const pendingDropAnimation = ev.dropped && _dropAnimationPending('retx-loss', ev.seq, ev.attempt);
       if (end > start && !ev.dropped && t >= start && t < end) {
         const progress = (t - start) / (end - start);
         drawPacket(tx(start + (end - start) * progress), rowY(ev.seq) + ROW_H * 0.48, '#7855b8', `RTX ${ev.seq}`);
-      } else if (end > start && ev.dropped && t >= start && t < lossTime) {
-        const progress = (t - start) / (lossTime - start);
+      } else if (end > start && pendingDropAnimation && t >= start) {
+        const progress = Math.max(0, Math.min(1, (t - start) / Math.max(1, lossTime - start)));
         drawPacket(tx(start + (lossTime - start) * progress), rowY(ev.seq) + ROW_H * 0.48, '#7855b8', `RTX ${ev.seq}`);
-      } else if (ev.dropped && t >= lossTime - 8 && t < lossTime + 24) {
+      } else if (ev.dropped && !pendingDropAnimation && t >= lossTime - 8 && t < lossTime + 24) {
         drawPacket(tx(lossTime), rowY(ev.seq) + ROW_H * 0.48, '#c84f4f', '', true);
       }
     } else if (ev.kind === 'ack') {
-      if (activeAnimationEvent?.kind === 'ack-loss' && activeAnimationEvent.seq === ev.seq
-        && activeAnimationEvent.attempt === ev.attempt) continue;
+      if (activeAnimationEvents.some(active => active.kind === 'ack-loss' && active.seq === ev.seq
+        && active.attempt === ev.attempt)) continue;
       const start = ev.tSend, end = ev.tArrive;
       const lossTime = start + (end - start) * 0.55;
       const y = rowY(ev.seq) + ROW_H * (0.74 + Math.min(ev.dupN ? 1 : 0, 1) * 0.07);
+      const pendingDropAnimation = ev.dropped && _dropAnimationPending('ack-loss', ev.seq, ev.attempt);
       if (end > start && !ev.dropped && t >= start && t < end) {
         const progress = (t - start) / (end - start);
         drawPacket(tx(start + (end - start) * progress), y, ev.isDup ? '#c68b24' : '#19865f', `ACK ${ev.ackNum}`);
-      } else if (end > start && ev.dropped && t >= start && t < lossTime) {
-        const progress = (t - start) / (lossTime - start);
+      } else if (end > start && pendingDropAnimation && t >= start) {
+        const progress = Math.max(0, Math.min(1, (t - start) / Math.max(1, lossTime - start)));
         drawPacket(tx(start + (lossTime - start) * progress), y, ev.isDup ? '#c68b24' : '#19865f', `ACK ${ev.ackNum}`);
-      } else if (ev.dropped && t >= lossTime - 8 && t < lossTime + 24) {
+      } else if (ev.dropped && !pendingDropAnimation && t >= lossTime - 8 && t < lossTime + 24) {
         drawPacket(tx(lossTime), y, '#c84f4f', '', true);
       }
     }
@@ -503,18 +576,15 @@ function drawInFlightPackets(t) {
 }
 
 function drawAnimatedEventPacket() {
-  const ev = activeAnimationEvent;
-  if (!ev) return;
-  if (['loss', 'ack-loss', 'retx-loss'].includes(ev.kind)) {
-    drawLossBurst(ev, activeAnimationProgress);
-    return;
-  }
-  if (ev.kind === 'timeout') {
-    const cx = tx(ev.t), cy = rowY(ev.seq) + ROW_H * 0.49;
-    ctx.save(); ctx.strokeStyle = '#e0a24d'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.arc(cx, cy, 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - activeAnimationProgress)); ctx.stroke();
-    ctx.fillStyle = '#c84f4f'; ctx.font = '700 7px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('', cx, cy + 2.5); ctx.restore();
-    return;
+  for (const ev of activeAnimationEvents) {
+    if (['loss', 'ack-loss', 'retx-loss'].includes(ev.kind)) {
+      drawLossBurst(ev, activeAnimationProgress);
+    } else if (ev.kind === 'timeout') {
+      const cx = tx(ev.t), cy = rowY(ev.seq) + ROW_H * 0.49;
+      ctx.save(); ctx.strokeStyle = '#e0a24d'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 8, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - activeAnimationProgress)); ctx.stroke();
+      ctx.fillStyle = '#c84f4f'; ctx.font = '700 7px Consolas,monospace'; ctx.textAlign = 'center'; ctx.fillText('', cx, cy + 2.5); ctx.restore();
+    }
   }
 }
 
@@ -668,6 +738,7 @@ function onMouseDown(e) {
   if (!isDraggableEndpoint) {
     hoverTime = xt(pos.x);
     playbackTime = hoverTime;
+    lastCompletedEventCursor = null;
     refreshEventSequence(session.snapshot);
     revealTimelineTime(hoverTime);
     drawDiagram(session.snapshot);
@@ -1017,7 +1088,7 @@ function renderWindowPanels(t) {
     + `窗口上界 = <strong>P${snap.senderWndEnd}</strong>`;
 
   const senderSignature = `${snap.cwnd}:${snap.sndUna}:${snap.senderWndEnd}|` + snap.senderPackets
-    .map(p => `${p.seq}:${p.senderState}:${p.inCwndWindow}`).join('|');
+    .map(p => `${p.seq}:${p.senderState}:${p.inSendWindow}`).join('|');
   if (senderSignature !== lastSenderRowsSignature) {
   const senderScrollTop = wndSenderList.scrollTop;
   wndSenderList.innerHTML = '';
@@ -1026,7 +1097,7 @@ function renderWindowPanels(t) {
     wndSenderList.innerHTML = '<div class="wnd-empty">此時尚無封包</div>';
   } else {
     for (const p of snap.senderPackets) {
-      const inWnd = p.inCwndWindow;
+      const inWnd = p.inSendWindow;
       const isUna = p.seq === snap.sndUna;
       const isWndEnd = p.seq === snap.senderWndEnd;
 
@@ -1038,8 +1109,8 @@ function renderWindowPanels(t) {
         isUna ? 'wnd-bracket-top' : '',
         isWndEnd ? 'wnd-bracket-bottom' : '',
       ].filter(Boolean).join(' ');
-      row.setAttribute('aria-label', `P${p.seq}，${SENDER_LABEL[p.senderState] ?? p.senderState}${inWnd ? '，位於 cwnd 範圍' : ''}`);
-      row.title = `P${p.seq} · ${SENDER_LABEL[p.senderState] ?? p.senderState}${inWnd ? ' · cwnd' : ''}`;
+      row.setAttribute('aria-label', `P${p.seq}，${SENDER_LABEL[p.senderState] ?? p.senderState}${inWnd ? '，位於目前傳送範圍' : ''}`);
+      row.title = `P${p.seq} · ${SENDER_LABEL[p.senderState] ?? p.senderState}${inWnd ? ' · 傳送範圍' : ''}`;
 
       let tagHtml = '';
       if (isUna)    tagHtml += `<span class="wnd-tag tag-una">SND.UNA</span>`;
@@ -1062,7 +1133,8 @@ function renderWindowPanels(t) {
   wndRecvTime.textContent = `t = ${Math.round(t)}`;
   wndRecvMeta.innerHTML =
     `下一個期望 seq = <strong>P${snap.receiverNextExpAck ?? snap.sndUna}</strong>　`
-    + `已確認至 = <strong>P${(snap.receiverCumAck ?? snap.cumAck) || '—'}</strong>`;
+    + `已確認至 = <strong>P${(snap.receiverCumAck ?? snap.cumAck) || '—'}</strong>　`
+    + `rwnd = <strong>${snap.rwnd === Infinity ? '無上限' : (snap.rwnd ?? session.getRwnd()) + ' MSS'}</strong>`;
 
   const receiverSignature = `${snap.receiverNextExpAck}:${snap.receiverCumAck ?? snap.cumAck}|` + snap.receiverPackets
     .map(p => `${p.seq}:${p.receiverState}`).join('|');

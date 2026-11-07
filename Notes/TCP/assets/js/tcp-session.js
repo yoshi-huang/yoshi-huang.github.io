@@ -19,12 +19,12 @@
 // 這裡把它當「顯示用」的常數，也傳進 TCPReno.simulate()
 const SESSION_CONFIG = Object.freeze({
   initCwnd:     1,
-  initSsthresh: 4,
+  initSsthresh: 8,
   propDelay:    60,   // 單程延遲（時間單位）；加大讓斜線看起來更有角度
   initialRto:   500,
   dupAckThresh: 3,
   minSsthresh:  2,
-  maxPackets:   48,
+  maxPackets:   45,
 });
 
 // RTT_UNIT 只是 UI 用來把時間單位轉成像素的參考值
@@ -37,6 +37,7 @@ class TCPSession {
     this._initialSsthresh = SESSION_CONFIG.initSsthresh;
     this._initialRto = SESSION_CONFIG.initialRto;
     this._maxPackets = SESSION_CONFIG.maxPackets;
+    this._rwnd = Infinity;
     this._droppedRetxKeys = new Set();
     this._droppedAckKeys = new Set();
     this._ackArrivalOverrides = new Map();
@@ -81,8 +82,9 @@ class TCPSession {
 
   setMaxPackets(value) {
     const numericValue = Number(value);
-    if (!Number.isInteger(numericValue) || numericValue < 1 || numericValue > 500) return false;
+    if (!Number.isInteger(numericValue) || numericValue < 1 || numericValue > 99) return false;
     this._maxPackets = numericValue;
+    if (this._rwnd !== Infinity) this._rwnd = Math.min(this._rwnd, numericValue);
     this._reset();
     return true;
   }
@@ -90,6 +92,16 @@ class TCPSession {
   getMaxPackets() {
     return this._maxPackets;
   }
+
+  setRwnd(value) {
+    const numericValue = Number(value);
+    if (!Number.isInteger(numericValue) || numericValue < 1 || numericValue > this._maxPackets + 1) return false;
+    this._rwnd = numericValue === this._maxPackets + 1 ? Infinity : numericValue;
+    this._recalc();
+    return true;
+  }
+
+  getRwnd() { return this._rwnd === Infinity ? this._maxPackets + 1 : this._rwnd; }
 
   /**
    * 拖曳封包尾端：改變 arrivalTime
@@ -177,7 +189,7 @@ class TCPSession {
       this.snapshot.drawEvents,
       this.getAllPackets(),
       t,
-      Object.assign({}, SESSION_CONFIG, { initSsthresh: this._initialSsthresh, initialRto: this._initialRto }),
+      Object.assign({}, SESSION_CONFIG, { initSsthresh: this._initialSsthresh, initialRto: this._initialRto, rwnd: this._rwnd }),
       this.snapshot.stateTimeline
     );
   }
@@ -209,6 +221,7 @@ class TCPSession {
       initSsthresh: this._initialSsthresh,
       initialRto: this._initialRto,
       maxPackets: this._maxPackets,
+      rwnd: this._rwnd,
       droppedRetxKeys: [...this._droppedRetxKeys],
       droppedAckKeys: [...this._droppedAckKeys],
       ackArrivalOverrides: Object.fromEntries(this._ackArrivalOverrides),
