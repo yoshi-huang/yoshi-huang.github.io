@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+        content="從國中到高中的手寫筆記電子化計畫。收錄數學、自然科學、社會科學、英文文法等科目的 A4 手寫筆記。" />
+  <meta name="theme-color" content="#4285F4" />
+  <meta property="og:title"       content="手寫筆記電子化" />
+  <meta property="og:description" content="從國中到高中的手寫筆記電子化計畫。" />
+  <meta property="og:type"        content="website" />
+  <meta property="og:image"       content="assets/pics/2025_Cell_GSAT.jpg" />
+  <title>手寫筆記電子化</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAV
+═══════════════════════════════════════════ -->
+<header>
+  <nav class="nav" aria-label="主要導覽">
+    <div class="container nav__inner">
+
+      <a href="#" class="nav__logo" aria-label="回到頂端">
+        <span class="nav__logo-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </span>
+        手寫筆記
+      </a>
+
+      <ul class="nav__links" id="nav-links" role="list">
+        <li><a href="#about">緣起</a></li>
+        <li><a href="#notes">筆記</a></li>
+        <li><a href="#method">整理方式</a></li>
+        <li>
+          <a href="https://github.com/yoshi-huang/Handwritten-Notes-Digitization"
+             class="nav__gh" target="_blank" rel="noopener noreferrer"
+             aria-label="在 GitHub 上查看此專案">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+            GitHub
+          </a>
+        </li>
+      </ul>
+
+      <button class="nav__toggle" aria-expanded="false"
+              aria-controls="nav-links" aria-label="開啟選單">
+        <span></span><span></span><span></span>
+      </button>
+
+    </div>
+  </nav>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════ -->
+<section class="hero" id="hero" aria-labelledby="hero-title">
+  <div class="container hero__inner">
+
+    <!-- text -->
+    <div>
+      <div class="hero__tag reveal">
+        <span class="hero__tag-dot" aria-hidden="true"></span>
+        個人學習紀錄 · 2022–2026
+      </div>
+
+      <h1 class="hero__title reveal" id="hero-title">
+        把零散知識<br>整理成<em>清晰結構</em>
+      </h1>
+
+      <p class="hero__desc reveal">
+        從國中到高中，我將每個章節濃縮為一份 A4 手寫筆記。
+        這個計畫把這些紙本紀錄轉換為可長期保存的數位檔案。
+      </p>
+
+      <div class="hero__actions reveal">
+        <a href="#notes" class="btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          瀏覽筆記
+        </a>
+        <a href="https://github.com/yoshi-huang/Handwritten-Notes-Digitization"
+           class="btn-ghost" target="_blank" rel="noopener noreferrer">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+
+      <div class="hero__stats reveal" aria-label="統計數字">
+        <div class="hero__stat">
+          <span class="hero__stat-val" data-count="10">0</span>
+          <span class="hero__stat-lbl">份 PDF 筆記</span>
+        </div>
+        <div class="hero__stat">
+          <span class="hero__stat-val" data-count="5">0</span>
+          <span class="hero__stat-lbl">個主要科目</span>
+        </div>
+        <div class="hero__stat">
+          <span class="hero__stat-val" data-count="5">0</span>
+          <span class="hero__stat-lbl">年學習跨度</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- visual -->
+    <div class="hero__visual reveal">
+      <div class="hero__img-wrap">
+        <img src="assets/pics/2025_Cell_GSAT.jpg"
+             alt="生物手寫筆記示例：細胞學主題，展示 A4 手寫整理方式"
+             loading="eager" />
+      </div>
+      <div class="hero__badge">
+        <span class="hero__badge-dot" aria-hidden="true"></span>
+        <span class="hero__badge-txt">生物 · 細胞學 GSAT</span>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     ABOUT
+═══════════════════════════════════════════ -->
+<section class="section" id="about" aria-labelledby="about-title">
+  <div class="container">
+
+    <div class="section__hd">
+      <span class="section__lbl reveal">緣起</span>
+      <h2 class="section__title reveal" id="about-title">為什麼做這些筆記</h2>
+      <p class="section__desc reveal">這一切從一個觀察開始：比起硬背，我更擅長理解結構。</p>
+    </div>
+
+    <!-- pair 1 -->
+    <div class="about__pair reveal">
+      <div>
+        <p class="about__label">學習習慣的形成</p>
+        <h3 class="about__title">把一個章節，壓縮成一張 A4</h3>
+        <p class="about__body">
+          我很早就意識到，對需要大量背誦的科目我並不擅長，
+          但對數理邏輯與結構化內容相對容易上手。
+        </p>
+        <p class="about__body">
+          從國中開始，我在準備考試時養成了一個固定方法——
+          把整個章節整理成一份 A4 筆記。
+          這個過程不只是抄寫，而是一種重新理解內容的方式。
+        </p>
+        <ul class="about__list">
+          <li>
+            <svg class="about__chk" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            把零散的知識整理成結構
+          </li>
+          <li>
+            <svg class="about__chk" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            找出不同概念之間的關係
+          </li>
+          <li>
+            <svg class="about__chk" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            用自己的方式重新表達課本內容
+          </li>
+        </ul>
+      </div>
+      <div class="about__card">
+        <blockquote class="about__quote">
+          「整理筆記的過程其實不只是抄寫，而是一種
+          <strong>重新理解內容</strong>的方式。」
+        </blockquote>
+      </div>
+    </div>
+
+    <!-- pair 2 -->
+    <div class="about__pair about__pair--flip reveal">
+      <div>
+        <p class="about__label">電子化的動機</p>
+        <h3 class="about__title">紙本之外，讓知識可以長期保存</h3>
+        <p class="about__body">
+          學測結束後，有了比較充裕的時間，
+          我開始重新思考這些筆記的意義。
+          留在紙本，可能隨時間散失；
+          整理成數位檔案，就可以長期保存與回顧。
+        </p>
+        <p class="about__body">
+          於是我把從國中到高中仍然找得到的筆記重新整理，
+          不只是掃描，而是依照科目與主題重新分類，
+          建立一個清楚的資料結構。
+        </p>
+      </div>
+      <div class="about__card">
+        <blockquote class="about__quote">
+          「這個筆記整理專案和我其他的程式專案有相同的核心——
+          <strong>把原本零散的資訊整理成一個清楚的結構</strong>。」
+        </blockquote>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     NOTES
+═══════════════════════════════════════════ -->
+<section class="section section--alt" id="notes" aria-labelledby="notes-title">
+  <div class="container">
+
+    <div class="section__hd">
+      <span class="section__lbl reveal">筆記目錄</span>
+      <h2 class="section__title reveal" id="notes-title">所有筆記</h2>
+      <p class="section__desc reveal">依時期分類，點擊卡片即可開啟 PDF 檔案。</p>
+    </div>
+
+    <!-- ══════════════ PERIOD 1：–2023 ══════════════ -->
+    <div class="period-group reveal">
+      <div class="period-group__hd">
+        <div class="period-group__label">
+          <span class="period-group__range">– 2023</span>
+          <span class="period-group__note">國中・高中前期</span>
+        </div>
+        <span class="period-group__bar" aria-hidden="true"></span>
+        <span class="period-group__count" aria-label="5 份筆記">5 份</span>
+      </div>
+
+      <!-- year sub-header: 2022 -->
+      <div class="year-sub reveal">
+        <span class="year-sub__num">2022</span>
+      </div>
+
+      <div class="notes-grid stagger">
+
+        <!-- 地理 -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Social_Science/geo/2022_Geography.pdf"
+                 aria-label="2022 地理筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2022_Geography.png" alt="2022 地理筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--geo">地理</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">地理</h3>
+            <p class="note-card__desc">地理基礎概念整理，涵蓋地形、氣候與人文地理。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Social_Science/geo/2022_Geography.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟地理 PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+        <!-- 中國史 -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Social_Science/his/2022_Chinese_history.pdf"
+                 aria-label="2022 中國史筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2022_Chinese_history.png" alt="2022 中國史筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--his">歷史</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">中國史</h3>
+            <p class="note-card__desc">中國歷史脈絡整理，依朝代與重要事件結構化呈現。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Social_Science/his/2022_Chinese_history.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟中國史 PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+        <!-- 公民 -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Social_Science/civ/2022_Politics_and_Law.pdf"
+                 aria-label="2022 公民筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2022_Politics_and_Law.png" alt="2022 政治與法律筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--civ">公民</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">政治與法律</h3>
+            <p class="note-card__desc">公民核心概念，涵蓋政治制度與法律基礎架構。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Social_Science/civ/2022_Politics_and_Law.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟政治與法律 PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- year sub-header: 2023 -->
+      <div class="year-sub reveal" style="margin-block-start: 2rem;">
+        <span class="year-sub__num">2023</span>
+      </div>
+
+      <div class="notes-grid stagger">
+
+        <!-- 幾何 CAP -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Math/2023_Geometry_CAP.pdf"
+                 aria-label="2023 幾何 CAP 筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2023_Geometry_CAP.pdf.png" alt="2023 幾何 CAP 筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--math">數學</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">幾何 CAP</h3>
+            <p class="note-card__desc">幾何重點整理，涵蓋核心定理、推導脈絡與典型題型分析。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Math/2023_Geometry_CAP.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟幾何 CAP PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+        <!-- 歷史 CAP -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Social_Science/his/2023_History_CAP.pdf"
+                 aria-label="2023 歷史 CAP 筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2023_History_CAP.png" alt="2023 歷史 CAP 筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--his">歷史</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">歷史 CAP</h3>
+            <p class="note-card__desc">考前重點整理，濃縮關鍵事件、人物與因果關係。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Social_Science/his/2023_History_CAP.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟歷史 CAP PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- ══════════════ PERIOD 2：–2026 ══════════════ -->
+    <div class="period-group reveal">
+      <div class="period-group__hd">
+        <div class="period-group__label">
+          <span class="period-group__range">– 2026</span>
+          <span class="period-group__note">高中後期・學測準備</span>
+        </div>
+        <span class="period-group__bar" aria-hidden="true"></span>
+        <span class="period-group__count" aria-label="5 份筆記">5 份</span>
+      </div>
+
+      <!-- year sub-header: 2024 -->
+      <div class="year-sub reveal">
+        <span class="year-sub__num">2024</span>
+      </div>
+
+      <div class="notes-grid stagger">
+
+        <!-- 氣候 Remaster -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Social_Science/geo/2024_Climate_Remaster.pdf"
+                 aria-label="2024 氣候 Remaster 筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2024_Climate_Remaster.png" alt="2024 氣候 Remaster 筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--geo">地理</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">氣候 Remaster</h3>
+            <p class="note-card__desc">氣候系統重整版，重新梳理氣候類型分布與成因架構。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Social_Science/geo/2024_Climate_Remaster.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟氣候 Remaster PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+        <!-- 科學史 -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Natural_Science/others/2024_History_of_Science.pdf"
+                 aria-label="2024 科學史筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2024_History_of_Science.png" alt="2024 科學史筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--sci">科學史</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">科學史</h3>
+            <p class="note-card__desc">科學發展的脈絡與重要事件，橫跨物理、化學與生命科學。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Natural_Science/others/2024_History_of_Science.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟科學史 PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- year sub-header: 2025 -->
+      <div class="year-sub reveal" style="margin-block-start: 2rem;">
+        <span class="year-sub__num">2025</span>
+      </div>
+
+      <div class="notes-grid stagger">
+
+        <!-- 細胞學 GSAT -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Natural_Science/bio/2025_Cell_GSAT.pdf"
+                 aria-label="2025 細胞學 GSAT 筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2025_Cell_GSAT.jpg" alt="2025 細胞學 GSAT 筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--bio">生物</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">細胞學 GSAT</h3>
+            <p class="note-card__desc">學測複習用生物筆記，系統整理細胞結構、功能與代謝流程。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Natural_Science/bio/2025_Cell_GSAT.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟細胞學 GSAT PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+        <!-- 英文子句 -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/English_Grammar/2025_Eng_clause.pdf"
+                 aria-label="2025 英文子句筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2025_Eng_clause.png" alt="2025 英文子句筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--eng">英文</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">英文子句</h3>
+            <p class="note-card__desc">子句類型與用法整理，涵蓋名詞子句、形容詞子句與副詞子句。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/English_Grammar/2025_Eng_clause.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟英文子句 PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- year sub-header: 2026 -->
+      <div class="year-sub reveal" style="margin-block-start: 2rem;">
+        <span class="year-sub__num">2026</span>
+      </div>
+
+      <div class="notes-grid stagger">
+
+        <!-- 結構式 -->
+        <article class="note-card reveal"
+                 data-href="assets/pdfs/Natural_Science/chm/2026_Structural_formula.pdf"
+                 aria-label="2026 結構式筆記，點擊開啟 PDF">
+          <div class="note-card__thumb">
+            <img src="assets/pics/2026_Structural_formula.png" alt="2026 結構式筆記縮圖" loading="lazy" />
+            <span class="note-card__subj chip--chm">化學</span>
+          </div>
+          <div class="note-card__body">
+            <h3 class="note-card__title">結構式</h3>
+            <p class="note-card__desc">有機化學結構式整理，涵蓋常見官能基與命名邏輯。</p>
+          </div>
+          <div class="note-card__foot">
+            <a href="assets/pdfs/Natural_Science/chm/2026_Structural_formula.pdf"
+               class="note-card__link" target="_blank" rel="noopener noreferrer" aria-label="開啟結構式 PDF">
+              開啟 PDF
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </a>
+            <span class="note-card__fmt">PDF</span>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     METHOD
+═══════════════════════════════════════════ -->
+<section class="section" id="method" aria-labelledby="method-title">
+  <div class="container">
+
+    <div class="section__hd">
+      <span class="section__lbl reveal">整理方式</span>
+      <h2 class="section__title reveal" id="method-title">從手寫到數位</h2>
+      <p class="section__desc reveal">每一份筆記的誕生，都經過以下流程。</p>
+    </div>
+
+    <div class="method__grid stagger">
+
+      <div class="method-card reveal">
+        <div class="method-card__icon" style="background:rgba(66,133,244,.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="#4285F4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <h3 class="method-card__title">手寫整理</h3>
+        <p class="method-card__text">
+          使用 A4 紙手寫，黑筆書寫主要內容，彩色筆標註重點。
+          邊寫邊重新思考內容結構。
+        </p>
+      </div>
+
+      <div class="method-card reveal">
+        <div class="method-card__icon" style="background:rgba(52,168,83,.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="#34A853" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+        </div>
+        <h3 class="method-card__title">掃描數位化</h3>
+        <p class="method-card__text">
+          A4 以下使用 Adobe Scan，A4 以上使用影印機掃描，
+          確保畫質清晰且適合長期保存。
+        </p>
+      </div>
+
+      <div class="method-card reveal">
+        <div class="method-card__icon" style="background:rgba(0,188,212,.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="#00BCD4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <h3 class="method-card__title">分類建檔</h3>
+        <p class="method-card__text">
+          所有文件轉換為 PDF 格式，依科目與年份分類存放，
+          建立清楚的目錄結構。
+        </p>
+      </div>
+
+      <div class="method-card reveal">
+        <div class="method-card__icon" style="background:rgba(251,188,5,.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="#B45309" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="18" cy="18" r="3"/>
+            <circle cx="6" cy="6" r="3"/>
+            <path d="M13 6h3a2 2 0 012 2v7"/>
+            <line x1="6" y1="9" x2="6" y2="21"/>
+          </svg>
+        </div>
+        <h3 class="method-card__title">版本管理</h3>
+        <p class="method-card__text">
+          使用 GitHub 管理所有檔案，提供版本紀錄、公開分享
+          與長期備份。
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<footer class="footer" aria-label="頁尾">
+  <div class="container">
+    <div class="footer__inner">
+      <div>
+        <div class="footer__brand">
+          <span class="footer__brand-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </span>
+          手寫筆記電子化
+        </div>
+        <p class="footer__note">
+          個人學習紀錄與公開展示用途。<br />
+          若需引用或轉載，請附上原作者出處。
+        </p>
+        <p class="footer__copy">© 2026 · Personal handwritten notes for academic review.</p>
+      </div>
+
+      <div class="footer__links">
+        <a href="https://github.com/yoshi-huang"
+           class="footer__link" target="_blank" rel="noopener noreferrer"
+           aria-label="在 GitHub 上查看此專案">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          yoshi-huang
+        </a>
+      </div>
+    </div>
+
+    <hr class="footer__div" />
+
+    <div class="footer__bottom">
+      <span>個人學習紀錄 · 2022–2026</span>
+      <span>Built with HTML · CSS · JS</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/main.js"></script>
+</body>
+</html>
