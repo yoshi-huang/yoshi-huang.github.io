@@ -1,43 +1,40 @@
 /**
- * Handwritten Notes Digitization — Main Script
+ * 手寫筆記電子化 — Main Script
  */
 'use strict';
 
 const $ = (s, c = document) => c.querySelector(s);
 const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 
-/* ── Nav scroll shadow + mobile toggle ── */
+/* ── Nav mobile toggle ── */
 function initNav() {
-  const nav    = $('.nav');
   const toggle = $('.nav__toggle');
   const links  = $('.nav__links');
-  if (!nav) return;
+  if (!toggle || !links) return;
 
-  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
-  window.addEventListener('scroll', onScroll, { passive: true });
-  onScroll();
+  toggle.addEventListener('click', () => {
+    const open = links.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(open));
+    document.body.style.overflow = open ? 'hidden' : '';
+  });
 
-  if (toggle && links) {
-    toggle.addEventListener('click', () => {
-      const open = links.classList.toggle('open');
-      toggle.setAttribute('aria-expanded', String(open));
-      document.body.style.overflow = open ? 'hidden' : '';
-    });
-    links.addEventListener('click', e => {
-      if (e.target.tagName === 'A') {
-        links.classList.remove('open');
-        toggle.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-      }
-    });
-    document.addEventListener('click', e => {
-      if (!nav.contains(e.target) && links.classList.contains('open')) {
-        links.classList.remove('open');
-        toggle.setAttribute('aria-expanded', 'false');
-        document.body.style.overflow = '';
-      }
-    });
-  }
+  links.addEventListener('click', e => {
+    if (e.target.tagName === 'A') {
+      links.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+  });
+
+  document.addEventListener('click', e => {
+    const nav = $('.nav');
+    if (!nav) return;
+    if (!nav.contains(e.target) && links.classList.contains('open')) {
+      links.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+  });
 }
 
 /* ── Active nav link via IntersectionObserver ── */
@@ -62,7 +59,7 @@ function initActiveNav() {
   sections.forEach(s => io.observe(s));
 }
 
-/* ── Reveal on scroll ── */
+/* ── Fade-in on scroll (opacity only) ── */
 function initReveal() {
   const els = $$('.reveal');
   if (!els.length) return;
@@ -74,25 +71,27 @@ function initReveal() {
         io.unobserve(e.target);
       }
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -36px 0px' });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
 
   els.forEach(el => io.observe(el));
 }
 
 /* ── Animated counter ── */
-function countUp(el, target, dur = 1100) {
+function countUp(el, target, dur = 900) {
   const start = performance.now();
   const tick  = now => {
     const p = Math.min((now - start) / dur, 1);
-    const e = 1 - Math.pow(1 - p, 3);          // ease-out cubic
+    const e = 1 - Math.pow(1 - p, 3);
     el.textContent = Math.round(target * e);
     if (p < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
 }
+
 function initCounters() {
   const els = $$('[data-count]');
   if (!els.length) return;
+
   const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
@@ -101,6 +100,7 @@ function initCounters() {
       }
     });
   }, { threshold: 0.6 });
+
   els.forEach(el => io.observe(el));
 }
 
@@ -113,8 +113,11 @@ function initScroll() {
     const tgt = document.getElementById(id);
     if (!tgt) return;
     e.preventDefault();
-    const offset = ($('.nav')?.offsetHeight ?? 64) + 16;
-    window.scrollTo({ top: tgt.getBoundingClientRect().top + scrollY - offset, behavior: 'smooth' });
+    const navH = $('.nav')?.offsetHeight ?? 56;
+    window.scrollTo({
+      top: tgt.getBoundingClientRect().top + scrollY - navH - 16,
+      behavior: 'smooth'
+    });
   });
 }
 
